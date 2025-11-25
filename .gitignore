@@ -1,0 +1,12 @@
+# Node/Vite artifacts
+frontend/node_modules
+frontend/dist
+backend/node_modules
+
+# Python artifacts
+__pycache__/
+*.pyc
+.venv
+
+# Misc
+.DS_Store

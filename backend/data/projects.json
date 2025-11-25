@@ -1,0 +1,199 @@
+[
+  {
+    "id": "rpa-probe",
+    "name": "RPA 探针",
+    "missionPhase": "原型设计",
+    "lifecycleState": "实验验证",
+    "sponsor": "内部 RPA 系列",
+    "summary": "用于等离子体能量分布测量的 Retarding Potential Analyzer，聚焦 0~1000 V 扫描与 0.2 eV 精度。",
+    "lastUpdated": "2025-11-19T09:55:00.000000",
+    "tags": [
+      "RPA",
+      "偏压扫描"
+    ],
+    "functionalDecomposition": [
+      {
+        "id": "fd-bias",
+        "title": "偏压控制",
+        "summary": "提供稳定的 0~1000 V 扫描轨迹",
+        "activities": [
+          "自动分辨率切换以兼顾粗扫/细扫",
+          "校准表实时温度补偿"
+        ],
+        "subSections": []
+      },
+      {
+        "id": "fd-telemetry",
+        "title": "测量与遥测",
+        "summary": "将电流/能量谱同步到数字后端",
+        "activities": [
+          "低噪声跨阻放大器",
+          "数据封装成 QA 包供 AI 消化"
+        ],
+        "subSections": []
+      }
+    ],
+    "physicalDecomposition": [
+      {
+        "id": "pd-collector",
+        "title": "收集极组件",
+        "summary": "多层栅极+收集极，兼容高压",
+        "activities": [
+          "同轴走线，减小寄生电感"
+        ],
+        "subSections": []
+      },
+      {
+        "id": "pd-electronics",
+        "title": "后端电子",
+        "summary": "高压 DAC、跨阻放大器与 MCU 控制板",
+        "activities": [
+          "隔离供电模块",
+          "数字监测接口"
+        ],
+        "subSections": []
+      },
+      {
+        "id": "pd-enclosure",
+        "title": "机箱与互联",
+        "summary": "500 mm 长 2.5U 机箱，容纳 picoammeter、数采卡与 24 V 开关电源",
+        "activities": [
+          "picoammeter 测量收集极电流并输出模拟量",
+          "模拟信号进入数采卡，上传至上位机",
+          "内置 24 V 开关电源为整机供电"
+        ],
+        "subSections": []
+      }
+    ],
+    "requirements": [
+      {
+        "id": "RPA-REQ-001",
+        "title": "偏压范围",
+        "statement": "偏压扫描范围覆盖 0~1000 V，步进精度优于 1 V。",
+        "rationale": "满足 RPA 对能量窗口覆盖的基本需求。",
+        "verificationMethod": "Test",
+        "status": "Draft",
+        "owner": "电源设计",
+        "priority": "High",
+        "scope": "system"
+      },
+      {
+        "id": "RPA-REQ-002",
+        "title": "能量分辨率",
+        "statement": "整机测得的能量分辨率优于 0.2 eV。",
+        "rationale": "支撑目标等离子体精细谱测量。",
+        "verificationMethod": "Analysis",
+        "status": "Draft",
+        "owner": "系统工程",
+        "priority": "High",
+        "scope": "system"
+      }
+    ],
+    "bom": [
+      {
+        "partNumber": "RPA-MECH-001",
+        "name": "2.5U 机箱",
+        "description": "500 mm 长铝合金机箱，含导轨和布线空间",
+        "quantity": 1.0,
+        "unit": "台",
+        "supplier": "自制",
+        "notes": "留有 picoammeter、数采卡安装孔位"
+      },
+      {
+        "partNumber": "RPA-ELEC-010",
+        "name": "Picoammeter 模块",
+        "description": "picoamp 级电流计，用于读取收集极电流",
+        "quantity": 1.0,
+        "unit": "件",
+        "supplier": "计划采购",
+        "notes": "输出模拟信号连接数采卡"
+      },
+      {
+        "partNumber": "RPA-DAQ-020",
+        "name": "数采卡",
+        "description": "多通道模拟输入，负责将 picoammeter 信号上传上位机",
+        "quantity": 1.0,
+        "unit": "件",
+        "supplier": "待定",
+        "notes": "与上位机通过以太网链接"
+      },
+      {
+        "partNumber": "RPA-PSU-024",
+        "name": "24V 开关电源",
+        "description": "24 V/150 W 开关电源，为机箱内部模块供电",
+        "quantity": 1.0,
+        "unit": "件",
+        "supplier": "明阳电源",
+        "notes": "带 EMI 过滤"
+      }
+    ],
+    "subsystems": [
+      "RPA探头（四栅极 + 收集极）",
+      "光学对中机构",
+      "二维真空位移机构与控制台",
+      "穿舱法兰与舱内线束",
+      "RPA探针电控箱（2U 机箱）",
+      "信号采集与处理模块",
+      "直流扫描电源（IT-M3415/IT-7700 系列）",
+      "上位机与自动化测量软件"
+    ],
+    "interfaces": [
+      {
+        "id": "ifc-optics-probe",
+        "fromSubsystem": "光学对中机构",
+        "toSubsystem": "RPA探头（四栅极 + 收集极）",
+        "type": "对中/定位",
+        "description": "按照 2.4.3.1/2.4.3.2 的流程，先通过光学对中机构完成羽流方向的可视对准，再由探头实现精确采样。"
+      },
+      {
+        "id": "ifc-probe-feedthrough",
+        "fromSubsystem": "RPA探头（四栅极 + 收集极）",
+        "toSubsystem": "穿舱法兰与舱内线束",
+        "type": "穿舱电缆/BNC",
+        "description": "探头的收集极电流与 V+/V- 通过 3 m 屏蔽同轴线束接入穿舱法兰的 BNC 与 M3 螺柱，并在舱内以 1 MΩ 电阻方式接地。"
+      },
+      {
+        "id": "ifc-feedthrough-control",
+        "fromSubsystem": "穿舱法兰与舱内线束",
+        "toSubsystem": "RPA探针电控箱（2U 机箱）",
+        "type": "pin 接线柱 + BNC 输入",
+        "description": "舱外端将穿舱法兰的 M3 螺柱与 BNC 连接到电控箱背板 pin1~4 及 I 口，向箱体内的采集/偏置通道提供收集极信号与供电。"
+      },
+      {
+        "id": "ifc-control-daq",
+        "fromSubsystem": "RPA探针电控箱（2U 机箱）",
+        "toSubsystem": "信号采集与处理模块",
+        "type": "内部测量链路",
+        "description": "电控箱 2U 机箱集成电流采集模块（2.4.4.1），通过背板 I 口将 BNC 输入分配给跨阻放大与DAQ 通道，实现离子电流采样。"
+      },
+      {
+        "id": "ifc-control-psu",
+        "fromSubsystem": "直流扫描电源（IT-M3415/IT-7700 系列）",
+        "toSubsystem": "RPA探针电控箱（2U 机箱）",
+        "type": "电源/程控",
+        "description": "IT-M3415 的 V+/V-/地通过香蕉头接至电控箱 V+、V- 与 GND，并用 USB2 通道保持程控扫描与状态回读。"
+      },
+      {
+        "id": "ifc-control-stage",
+        "fromSubsystem": "二维真空位移机构与控制台",
+        "toSubsystem": "RPA探针电控箱（2U 机箱）",
+        "type": "USB-232 控制",
+        "description": "位移控制台的 X/Y 轴经成束 DB9 穿舱航插连接探针平台，再通过 USB-232 线插入电控箱 USB3 接口受控。"
+      },
+      {
+        "id": "ifc-control-host",
+        "fromSubsystem": "RPA探针电控箱（2U 机箱）",
+        "toSubsystem": "上位机与自动化测量软件",
+        "type": "USB 通讯",
+        "description": "电控箱 USB1 口连接 LabVIEW 上位机，软件统一调度程控电源、位移机构与采集状态。"
+      },
+      {
+        "id": "ifc-daq-host",
+        "fromSubsystem": "信号采集与处理模块",
+        "toSubsystem": "上位机与自动化测量软件",
+        "type": "数据采集",
+        "description": "多功能采集卡通过 USB 向上位机推送收集极电流与遥测，软件实时判定并存档测试结果（4.1 节）。"
+      }
+    ]
+  }
+]
