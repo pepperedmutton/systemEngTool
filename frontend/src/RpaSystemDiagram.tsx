@@ -34,14 +34,6 @@ const nodes: DiagramNode[] = [
     height: 80,
   },
   {
-    id: 'psu',
-    label: ['24 V 开关电源'],
-    x: 40,
-    y: 210,
-    width: 250,
-    height: 80,
-  },
-  {
     id: 'control',
     label: ['机箱接口/控制面板'],
     x: 380,
@@ -117,15 +109,6 @@ const edges: DiagramEdge[] = [
     midX: 620,
     midY: 80,
     labelOffsetY: -10,
-  },
-  {
-    id: 'psu-to-control',
-    from: 'psu',
-    to: 'control',
-    label: '24 V DC 供电',
-    labelOffsetY: -8,
-    midX: 300,
-    midY: 250,
   },
   {
     id: 'stage-to-control',
