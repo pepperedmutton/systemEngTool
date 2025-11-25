@@ -84,8 +84,8 @@ const nodes: DiagramNode[] = [
   {
     id: 'host',
     label: ['上位机与自动化', '测量软件'],
-    x: 1150,
-    y: 360,
+    x: 40,
+    y: 430,
     width: 220,
     height: 90,
   },
@@ -93,7 +93,7 @@ const nodes: DiagramNode[] = [
     id: 'stage',
     label: ['二维真空位移机构', '与控制台'],
     x: 440,
-    y: 520,
+    y: 560,
     width: 260,
     height: 80,
   },
@@ -122,6 +122,7 @@ const edges: DiagramEdge[] = [
     to: 'control',
     label: '24 V DC 供电',
     labelOffsetY: -8,
+    midX: 240,
   },
   {
     id: 'stage-to-control',
@@ -172,14 +173,16 @@ const edges: DiagramEdge[] = [
     to: 'host',
     label: 'USB 控制/遥测',
     labelOffsetY: -14,
-    midX: 880,
+    midX: 220,
+    midY: 220,
   },
   {
     id: 'tia-to-host',
     from: 'tia',
     to: 'host',
     label: '电流表测量回读',
-    midX: 880,
+    midX: 240,
+    midY: 360,
   },
   {
     id: 'hv-to-host',
@@ -189,7 +192,8 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'right',
     toAnchor: 'top',
     labelOffsetY: -10,
-    midX: 760,
+    midX: 240,
+    midY: 140,
   },
 ]
 
