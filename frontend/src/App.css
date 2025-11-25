@@ -527,6 +527,7 @@ button[type='submit']:disabled {
   font-size: 13px;
   text-anchor: middle;
   dominant-baseline: middle;
+  pointer-events: none;
 }
 
 .rpa-edge line {
@@ -537,6 +538,7 @@ button[type='submit']:disabled {
   fill: #cbd5f5;
   font-size: 12px;
   text-anchor: middle;
+  pointer-events: none;
 }
 
 .rpa-edge polyline {

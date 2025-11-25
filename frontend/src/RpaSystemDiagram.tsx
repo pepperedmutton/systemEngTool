@@ -28,17 +28,17 @@ const nodes: DiagramNode[] = [
   {
     id: 'hv-scan',
     label: ['外置高压扫描电源', '（提供偏压）'],
-    x: 40,
-    y: 60,
-    width: 250,
-    height: 80,
+    x: 30,
+    y: 40,
+    width: 240,
+    height: 78,
   },
   {
     id: 'control',
     label: ['机箱接口/控制面板'],
-    x: 380,
+    x: 410,
     y: 120,
-    width: 340,
+    width: 330,
     height: 90,
   },
   {
@@ -53,14 +53,14 @@ const nodes: DiagramNode[] = [
     id: 'probe',
     label: ['RPA探头', '（四栅极 + 收集极）'],
     x: 1130,
-    y: 210,
+    y: 230,
     width: 220,
     height: 90,
   },
   {
     id: 'tia',
     label: ['跨阻/电流计', '（机箱内）'],
-    x: 390,
+    x: 420,
     y: 230,
     width: 280,
     height: 70,
@@ -68,7 +68,7 @@ const nodes: DiagramNode[] = [
   {
     id: 'screen-bias',
     label: ['屏蔽栅偏压源', '（机箱内）'],
-    x: 390,
+    x: 420,
     y: 330,
     width: 280,
     height: 70,
@@ -76,23 +76,23 @@ const nodes: DiagramNode[] = [
   {
     id: 'host',
     label: ['上位机与自动化', '测量软件'],
-    x: 40,
-    y: 450,
+    x: 20,
+    y: 500,
     width: 230,
     height: 90,
   },
   {
     id: 'stage',
     label: ['二维真空位移机构', '与控制台'],
-    x: 480,
-    y: 560,
+    x: 520,
+    y: 620,
     width: 260,
     height: 80,
   },
 ]
 
 const chassisBox = {
-  x: 360,
+  x: 380,
   y: 80,
   width: 380,
   height: 360,
@@ -106,8 +106,8 @@ const edges: DiagramEdge[] = [
     to: 'feedthrough',
     label: '扫描偏压 V+/V-',
     toAnchor: 'top',
-    midX: 620,
-    midY: 80,
+    midX: 700,
+    midY: 30,
     labelOffsetY: -10,
   },
   {
@@ -118,8 +118,8 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'top',
     toAnchor: 'bottom',
     labelOffsetY: -10,
-    midX: 560,
-    midY: 520,
+    midX: 620,
+    midY: 540,
   },
   {
     id: 'screen-bias-to-feedthrough',
@@ -128,7 +128,7 @@ const edges: DiagramEdge[] = [
     label: '屏蔽栅偏压',
     toAnchor: 'left',
     labelOffsetY: -6,
-    midX: 760,
+    midX: 780,
     midY: 360,
   },
   {
@@ -153,7 +153,7 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'bottom',
     toAnchor: 'right',
     labelOffsetY: 12,
-    midX: 760,
+    midX: 780,
     midY: 280,
   },
   {
@@ -163,7 +163,7 @@ const edges: DiagramEdge[] = [
     label: 'USB 控制/遥测',
     labelOffsetY: -14,
     midX: 180,
-    midY: 180,
+    midY: 260,
   },
   {
     id: 'tia-to-host',
@@ -171,7 +171,7 @@ const edges: DiagramEdge[] = [
     to: 'host',
     label: '电流表测量回读',
     midX: 190,
-    midY: 400,
+    midY: 420,
     labelOffsetY: 12,
   },
   {
@@ -182,8 +182,8 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'right',
     toAnchor: 'top',
     labelOffsetY: -10,
-    midX: 160,
-    midY: 120,
+    midX: 150,
+    midY: 90,
   },
 ]
 
