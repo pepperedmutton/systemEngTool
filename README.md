@@ -24,6 +24,14 @@ frontend/       Vite + React (TypeScript) 客户端
 notes/          仍保留 NASA Handbook 学习笔记，供参考
 ```
 
+## 更新（系统级方块图支持）
+
+- **组件位置**：`frontend/src/RpaSystemDiagram.tsx`，纯 SVG 方块图，无额外依赖。当前节点/连线示例基于默认数据集（RPA 探针），如需适配其他项目，可直接修改组件内的节点和接口文案。
+- **集成方式**：`frontend/src/App.tsx` 中新增 `determineCurrentPhase(project, skipEarlyStages)`，结合 `lifecycleState`/`missionPhase` 推导当前阶段（pdr/cdr/sir/orr）。每个 `StageSection` 尾部按 `currentPhase` 条件渲染 `<RpaSystemDiagram />`，确保方块图始终位于当前阶段内容的底部。
+- **信息来源**：示例节点与连线取自 `backend/data/projects.json` 的现有项目字段（偏压/供电、探头、跨阻/采集、上位机、控制/位移等链路）。更换项目时只需更新 JSON 数据和/或 `RpaSystemDiagram.tsx` 内的布局/文案。
+- **样式**：新增样式位于 `frontend/src/App.css`（`.rpa-diagram*`），沿用深色玻璃态风格，可按需扩展。
+- **查看方法**：`cd frontend && npm run dev`，浏览器打开默认端口（如 `http://localhost:5173`），选择任意项目，滚动到当前阶段（由生命周期状态自动判定）即可看到方块图示例。
+
 ## 后端运行
 
 ```bash

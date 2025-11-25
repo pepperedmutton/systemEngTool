@@ -492,6 +492,53 @@ button[type='submit']:disabled {
   color: #bef264;
 }
 
+.rpa-diagram {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(99, 102, 241, 0.18), transparent 40%),
+    rgba(15, 23, 42, 0.82);
+}
+
+.rpa-diagram__header h3 {
+  margin: 0 0 0.35rem;
+}
+
+.rpa-diagram__lede {
+  margin: 0 0 0.5rem;
+  color: #cbd5f5;
+}
+
+.rpa-diagram__svg {
+  width: 100%;
+  height: auto;
+}
+
+.rpa-node rect {
+  fill: rgba(30, 41, 59, 0.92);
+  stroke: rgba(148, 163, 184, 0.55);
+  stroke-width: 1.4px;
+}
+
+.rpa-node__label {
+  fill: #e2e8f0;
+  font-size: 13px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.rpa-edge line {
+  stroke: #38bdf8;
+}
+
+.rpa-edge__label {
+  fill: #cbd5f5;
+  font-size: 12px;
+  text-anchor: middle;
+}
+
 @media (max-width: 1100px) {
   .requirements__content {
     grid-template-columns: 1fr;

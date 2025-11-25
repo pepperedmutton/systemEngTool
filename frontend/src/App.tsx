@@ -16,6 +16,7 @@ import type {
   Requirement,
   RequirementPayload,
 } from './types'
+import RpaSystemDiagram from './RpaSystemDiagram'
 
 const verificationOptions = ['Analysis', 'Inspection', 'Test', 'Demonstration']
 const priorityOptions = ['High', 'Medium', 'Low']
@@ -55,6 +56,22 @@ const requirementDefaults: RequirementPayload = {
   owner: '',
   priority: priorityOptions[1],
   scope: 'system',
+}
+
+function determineCurrentPhase(project: Project, skipEarlyStages: boolean) {
+  if (skipEarlyStages) return 'sir' as const
+
+  const lifecycle = project.lifecycleState.toLowerCase()
+  const mission = project.missionPhase.toLowerCase()
+  const combined = `${lifecycle} ${mission}`
+
+  if (combined.includes('交付') || combined.includes('orr')) return 'orr' as const
+  if (combined.includes('验证') || combined.includes('集成') || combined.includes('sir'))
+    return 'sir' as const
+  if (combined.includes('关键') || combined.includes('cdr') || combined.includes('冻结'))
+    return 'cdr' as const
+
+  return 'pdr' as const
 }
 
 function App() {
@@ -651,6 +668,11 @@ function ProjectDetail({
     ? '系统集成评审'
     : project.missionPhase || project.lifecycleState
 
+  const currentPhase = useMemo(
+    () => determineCurrentPhase(project, skipEarlyStages),
+    [project, skipEarlyStages],
+  )
+
   return (
     <div className="detail-shell">
       <div className="detail-layout">
@@ -698,18 +720,21 @@ function ProjectDetail({
             {skipEarlyStages ? (
               <EmptyStageHint text="RPA 项目跳过初步设计阶段，此处留空。" />
             ) : (
-              <div className="doc-grid">
-                <DocumentPanel
-                  title="功能分解"
-                  sections={project.functionalDecomposition}
-                  description="面向客户需求拆解测量、偏压、健康监控等功能。"
-                />
-                <DocumentPanel
-                  title="物理分解"
-                  sections={project.physicalDecomposition}
-                  description="将功能落实到探针前端、后电路、结构件等实体。"
-                />
-              </div>
+              <>
+                <div className="doc-grid">
+                  <DocumentPanel
+                    title="功能分解"
+                    sections={project.functionalDecomposition}
+                    description="面向客户需求拆解测量、偏压、健康监控等功能。"
+                  />
+                  <DocumentPanel
+                    title="物理分解"
+                    sections={project.physicalDecomposition}
+                    description="将功能落实到探针前端、后电路、结构件等实体。"
+                  />
+                </div>
+                {currentPhase === 'pdr' && <RpaSystemDiagram />}
+              </>
             )}
           </StageSection>
 
@@ -735,6 +760,7 @@ function ProjectDetail({
                   isSaving={isSaving}
                 />
                 <InterfacePanel subsystems={project.subsystems} interfaces={project.interfaces} />
+                {currentPhase === 'cdr' && <RpaSystemDiagram />}
               </>
             )}
           </StageSection>
@@ -747,9 +773,15 @@ function ProjectDetail({
             onToggle={() => toggleStage('sir')}
           >
             {skipEarlyStages ? (
-              <InterfacePanel subsystems={project.subsystems} interfaces={project.interfaces} />
+              <>
+                <InterfacePanel subsystems={project.subsystems} interfaces={project.interfaces} />
+                {currentPhase === 'sir' && <RpaSystemDiagram />}
+              </>
             ) : (
-              <IntegrationPanel subsystems={project.subsystems} />
+              <>
+                <IntegrationPanel subsystems={project.subsystems} />
+                {currentPhase === 'sir' && <RpaSystemDiagram />}
+              </>
             )}
           </StageSection>
 
@@ -760,7 +792,10 @@ function ProjectDetail({
             isCollapsed={!!collapsedStages.orr}
             onToggle={() => toggleStage('orr')}
           >
-            <BOMPanel bom={project.bom} />
+            <>
+              <BOMPanel bom={project.bom} />
+              {currentPhase === 'orr' && <RpaSystemDiagram />}
+            </>
           </StageSection>
         </div>
       </div>
