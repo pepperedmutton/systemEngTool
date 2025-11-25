@@ -539,6 +539,10 @@ button[type='submit']:disabled {
   text-anchor: middle;
 }
 
+.rpa-edge polyline {
+  opacity: 0.9;
+}
+
 .rpa-chassis rect {
   fill: rgba(59, 130, 246, 0.06);
   stroke: rgba(148, 163, 184, 0.6);

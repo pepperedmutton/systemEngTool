@@ -28,39 +28,39 @@ const nodes: DiagramNode[] = [
   {
     id: 'hv-scan',
     label: ['外置高压扫描电源', '（提供偏压）'],
-    x: 60,
-    y: 80,
+    x: 40,
+    y: 60,
     width: 250,
     height: 80,
   },
   {
     id: 'psu',
     label: ['24 V 开关电源'],
-    x: 60,
-    y: 240,
+    x: 40,
+    y: 210,
     width: 250,
     height: 80,
   },
   {
     id: 'control',
     label: ['机箱接口/控制面板'],
-    x: 330,
+    x: 380,
     y: 120,
-    width: 360,
+    width: 340,
     height: 90,
   },
   {
     id: 'feedthrough',
     label: ['穿舱法兰与舱内线束'],
-    x: 780,
+    x: 830,
     y: 210,
-    width: 240,
+    width: 230,
     height: 80,
   },
   {
     id: 'probe',
     label: ['RPA探头', '（四栅极 + 收集极）'],
-    x: 1150,
+    x: 1130,
     y: 210,
     width: 220,
     height: 90,
@@ -68,31 +68,31 @@ const nodes: DiagramNode[] = [
   {
     id: 'tia',
     label: ['跨阻/电流计', '（机箱内）'],
-    x: 360,
-    y: 240,
-    width: 300,
+    x: 390,
+    y: 230,
+    width: 280,
     height: 70,
   },
   {
     id: 'screen-bias',
     label: ['屏蔽栅偏压源', '（机箱内）'],
-    x: 360,
+    x: 390,
     y: 330,
-    width: 300,
+    width: 280,
     height: 70,
   },
   {
     id: 'host',
     label: ['上位机与自动化', '测量软件'],
     x: 40,
-    y: 430,
-    width: 220,
+    y: 450,
+    width: 230,
     height: 90,
   },
   {
     id: 'stage',
     label: ['二维真空位移机构', '与控制台'],
-    x: 440,
+    x: 480,
     y: 560,
     width: 260,
     height: 80,
@@ -100,9 +100,9 @@ const nodes: DiagramNode[] = [
 ]
 
 const chassisBox = {
-  x: 320,
+  x: 360,
   y: 80,
-  width: 420,
+  width: 380,
   height: 360,
   label: 'RPA 探针电控机箱（集成电流计 + 栅偏压源）',
 }
@@ -114,7 +114,9 @@ const edges: DiagramEdge[] = [
     to: 'feedthrough',
     label: '扫描偏压 V+/V-',
     toAnchor: 'top',
-    midX: 560,
+    midX: 620,
+    midY: 80,
+    labelOffsetY: -10,
   },
   {
     id: 'psu-to-control',
@@ -122,7 +124,8 @@ const edges: DiagramEdge[] = [
     to: 'control',
     label: '24 V DC 供电',
     labelOffsetY: -8,
-    midX: 240,
+    midX: 300,
+    midY: 250,
   },
   {
     id: 'stage-to-control',
@@ -132,7 +135,8 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'top',
     toAnchor: 'bottom',
     labelOffsetY: -10,
-    midX: 520,
+    midX: 560,
+    midY: 520,
   },
   {
     id: 'screen-bias-to-feedthrough',
@@ -141,7 +145,8 @@ const edges: DiagramEdge[] = [
     label: '屏蔽栅偏压',
     toAnchor: 'left',
     labelOffsetY: -6,
-    midX: 700,
+    midX: 760,
+    midY: 360,
   },
   {
     id: 'feedthrough-to-probe',
@@ -165,7 +170,8 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'bottom',
     toAnchor: 'right',
     labelOffsetY: 12,
-    midX: 720,
+    midX: 760,
+    midY: 280,
   },
   {
     id: 'control-to-host',
@@ -173,16 +179,17 @@ const edges: DiagramEdge[] = [
     to: 'host',
     label: 'USB 控制/遥测',
     labelOffsetY: -14,
-    midX: 220,
-    midY: 220,
+    midX: 180,
+    midY: 180,
   },
   {
     id: 'tia-to-host',
     from: 'tia',
     to: 'host',
     label: '电流表测量回读',
-    midX: 240,
-    midY: 360,
+    midX: 190,
+    midY: 400,
+    labelOffsetY: 12,
   },
   {
     id: 'hv-to-host',
@@ -192,8 +199,8 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'right',
     toAnchor: 'top',
     labelOffsetY: -10,
-    midX: 240,
-    midY: 140,
+    midX: 160,
+    midY: 120,
   },
 ]
 
@@ -236,7 +243,10 @@ function buildPolylinePoints(
 ) {
   const midX = edge.midX ?? (start.x + end.x) / 2
   const midY = edge.midY ?? end.y
-  return `${start.x},${start.y} ${midX},${start.y} ${midX},${midY} ${end.x},${end.y}`
+  const midPoints: Array<{ x: number; y: number }> = []
+  midPoints.push({ x: midX, y: start.y })
+  midPoints.push({ x: midX, y: midY })
+  return [start, ...midPoints, end].map((pt) => `${pt.x},${pt.y}`).join(' ')
 }
 
 const RpaSystemDiagram: FC = () => {
