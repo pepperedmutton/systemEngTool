@@ -26,76 +26,84 @@ const nodes: DiagramNode[] = [
   {
     id: 'hv-scan',
     label: ['外置高压扫描电源', '（提供偏压）'],
-    x: 30,
-    y: 60,
-    width: 220,
+    x: 40,
+    y: 100,
+    width: 210,
     height: 72,
   },
   {
     id: 'psu',
     label: ['24 V 开关电源'],
-    x: 30,
-    y: 210,
-    width: 220,
-    height: 70,
-  },
-  {
-    id: 'control',
-    label: ['RPA探针电控机箱', '（含电流计 + 屏蔽栅偏压源）'],
-    x: 300,
-    y: 120,
-    width: 250,
-    height: 90,
-  },
-  {
-    id: 'feedthrough',
-    label: ['穿舱法兰与舱内线束'],
-    x: 610,
-    y: 150,
-    width: 200,
-    height: 70,
-  },
-  {
-    id: 'probe',
-    label: ['RPA探头', '（四栅极 + 收集极）'],
-    x: 890,
-    y: 150,
-    width: 210,
-    height: 80,
-  },
-  {
-    id: 'tia',
-    label: ['跨阻/电流计', '（机箱内）'],
-    x: 330,
+    x: 40,
     y: 240,
     width: 210,
     height: 70,
   },
   {
+    id: 'control',
+    label: ['机箱接口/控制面板'],
+    x: 280,
+    y: 120,
+    width: 300,
+    height: 80,
+  },
+  {
+    id: 'feedthrough',
+    label: ['穿舱法兰与舱内线束'],
+    x: 650,
+    y: 190,
+    width: 190,
+    height: 70,
+  },
+  {
+    id: 'probe',
+    label: ['RPA探头', '（四栅极 + 收集极）'],
+    x: 910,
+    y: 190,
+    width: 200,
+    height: 80,
+  },
+  {
+    id: 'tia',
+    label: ['跨阻/电流计', '（机箱内）'],
+    x: 300,
+    y: 230,
+    width: 260,
+    height: 60,
+  },
+  {
     id: 'screen-bias',
     label: ['屏蔽栅偏压源', '（机箱内）'],
-    x: 330,
-    y: 330,
-    width: 210,
-    height: 70,
+    x: 300,
+    y: 300,
+    width: 260,
+    height: 60,
   },
   {
     id: 'host',
     label: ['上位机与自动化', '测量软件'],
-    x: 890,
-    y: 260,
-    width: 210,
+    x: 910,
+    y: 290,
+    width: 200,
     height: 80,
   },
   {
     id: 'stage',
     label: ['二维真空位移机构', '与控制台'],
     x: 330,
-    y: 430,
+    y: 440,
     width: 220,
     height: 80,
   },
 ]
+
+const chassisBox = {
+  x: 260,
+  y: 100,
+  width: 340,
+  height: 320,
+  label: 'RPA 探针电控机箱（集成电流计 + 栅偏压源）',
+}
 
 const edges: DiagramEdge[] = [
   {
@@ -231,6 +239,20 @@ const RpaSystemDiagram: FC = () => {
             <path d="M0,0 L10,3.5 L0,7 Z" fill="#38bdf8" />
           </marker>
         </defs>
+
+        <g className="rpa-chassis">
+          <rect
+            x={chassisBox.x}
+            y={chassisBox.y}
+            width={chassisBox.width}
+            height={chassisBox.height}
+            rx="14"
+            ry="14"
+          />
+          <text x={chassisBox.x + chassisBox.width / 2} y={chassisBox.y + 18}>
+            {chassisBox.label}
+          </text>
+        </g>
 
         {edges.map((edge) => {
           const points = getEdgePoints(edge)
