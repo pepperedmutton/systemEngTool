@@ -20,88 +20,90 @@ type DiagramEdge = {
   toAnchor?: Anchor
   labelOffsetX?: number
   labelOffsetY?: number
+  midX?: number
+  midY?: number
 }
 
 const nodes: DiagramNode[] = [
   {
     id: 'hv-scan',
     label: ['外置高压扫描电源', '（提供偏压）'],
-    x: 40,
-    y: 100,
-    width: 210,
-    height: 72,
+    x: 60,
+    y: 80,
+    width: 250,
+    height: 80,
   },
   {
     id: 'psu',
     label: ['24 V 开关电源'],
-    x: 40,
+    x: 60,
     y: 240,
-    width: 210,
-    height: 70,
+    width: 250,
+    height: 80,
   },
   {
     id: 'control',
     label: ['机箱接口/控制面板'],
-    x: 280,
+    x: 330,
     y: 120,
-    width: 300,
-    height: 80,
+    width: 360,
+    height: 90,
   },
   {
     id: 'feedthrough',
     label: ['穿舱法兰与舱内线束'],
-    x: 650,
-    y: 190,
-    width: 190,
-    height: 70,
+    x: 780,
+    y: 210,
+    width: 240,
+    height: 80,
   },
   {
     id: 'probe',
     label: ['RPA探头', '（四栅极 + 收集极）'],
-    x: 910,
-    y: 190,
-    width: 200,
-    height: 80,
+    x: 1150,
+    y: 210,
+    width: 220,
+    height: 90,
   },
   {
     id: 'tia',
     label: ['跨阻/电流计', '（机箱内）'],
-    x: 300,
-    y: 230,
-    width: 260,
-    height: 60,
+    x: 360,
+    y: 240,
+    width: 300,
+    height: 70,
   },
   {
     id: 'screen-bias',
     label: ['屏蔽栅偏压源', '（机箱内）'],
-    x: 300,
-    y: 300,
-    width: 260,
-    height: 60,
+    x: 360,
+    y: 330,
+    width: 300,
+    height: 70,
   },
   {
     id: 'host',
     label: ['上位机与自动化', '测量软件'],
-    x: 910,
-    y: 290,
-    width: 200,
-    height: 80,
+    x: 1150,
+    y: 360,
+    width: 220,
+    height: 90,
   },
   {
     id: 'stage',
     label: ['二维真空位移机构', '与控制台'],
-    x: 330,
-    y: 440,
-    width: 220,
+    x: 440,
+    y: 520,
+    width: 260,
     height: 80,
   },
 ]
 
 const chassisBox = {
-  x: 260,
-  y: 100,
-  width: 340,
-  height: 320,
+  x: 320,
+  y: 80,
+  width: 420,
+  height: 360,
   label: 'RPA 探针电控机箱（集成电流计 + 栅偏压源）',
 }
 
@@ -112,6 +114,7 @@ const edges: DiagramEdge[] = [
     to: 'feedthrough',
     label: '扫描偏压 V+/V-',
     toAnchor: 'top',
+    midX: 560,
   },
   {
     id: 'psu-to-control',
@@ -128,6 +131,7 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'top',
     toAnchor: 'bottom',
     labelOffsetY: -10,
+    midX: 520,
   },
   {
     id: 'screen-bias-to-feedthrough',
@@ -136,18 +140,21 @@ const edges: DiagramEdge[] = [
     label: '屏蔽栅偏压',
     toAnchor: 'left',
     labelOffsetY: -6,
+    midX: 700,
   },
   {
     id: 'feedthrough-to-probe',
     from: 'feedthrough',
     to: 'probe',
     label: '穿舱线束 -> 四栅极/收集极',
+    midX: 1010,
   },
   {
     id: 'control-to-feedthrough',
     from: 'control',
     to: 'feedthrough',
     label: '机箱背板分配 BNC/pin',
+    midX: 640,
   },
   {
     id: 'feedthrough-to-tia',
@@ -157,6 +164,7 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'bottom',
     toAnchor: 'right',
     labelOffsetY: 12,
+    midX: 720,
   },
   {
     id: 'control-to-host',
@@ -164,12 +172,14 @@ const edges: DiagramEdge[] = [
     to: 'host',
     label: 'USB 控制/遥测',
     labelOffsetY: -14,
+    midX: 880,
   },
   {
     id: 'tia-to-host',
     from: 'tia',
     to: 'host',
     label: '电流表测量回读',
+    midX: 880,
   },
   {
     id: 'hv-to-host',
@@ -179,6 +189,7 @@ const edges: DiagramEdge[] = [
     fromAnchor: 'right',
     toAnchor: 'top',
     labelOffsetY: -10,
+    midX: 760,
   },
 ]
 
@@ -214,6 +225,16 @@ function getEdgePoints(edge: DiagramEdge) {
   return { start, end }
 }
 
+function buildPolylinePoints(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  edge: DiagramEdge,
+) {
+  const midX = edge.midX ?? (start.x + end.x) / 2
+  const midY = edge.midY ?? end.y
+  return `${start.x},${start.y} ${midX},${start.y} ${midX},${midY} ${end.x},${end.y}`
+}
+
 const RpaSystemDiagram: FC = () => {
   return (
     <div className="rpa-diagram" role="figure" aria-label="RPA 系统级方块图">
@@ -225,20 +246,7 @@ const RpaSystemDiagram: FC = () => {
         </p>
       </div>
 
-      <svg viewBox="0 0 1120 520" className="rpa-diagram__svg">
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="10"
-            markerHeight="7"
-            refX="10"
-            refY="3.5"
-            orient="auto"
-            markerUnits="strokeWidth"
-          >
-            <path d="M0,0 L10,3.5 L0,7 Z" fill="#38bdf8" />
-          </marker>
-        </defs>
+      <svg viewBox="0 0 1400 720" className="rpa-diagram__svg">
 
         <g className="rpa-chassis">
           <rect
@@ -257,21 +265,14 @@ const RpaSystemDiagram: FC = () => {
         {edges.map((edge) => {
           const points = getEdgePoints(edge)
           if (!points) return null
-          const labelX = (points.start.x + points.end.x) / 2 + (edge.labelOffsetX ?? 0)
+          const polylinePoints = buildPolylinePoints(points.start, points.end, edge)
+          const labelX = (edge.midX ?? (points.start.x + points.end.x) / 2) + (edge.labelOffsetX ?? 0)
           const labelY =
-            (points.start.y + points.end.y) / 2 + (edge.labelOffsetY ?? -6)
+            (edge.midY ?? (points.start.y + points.end.y) / 2) + (edge.labelOffsetY ?? -6)
 
           return (
             <g key={edge.id} className="rpa-edge">
-              <line
-                x1={points.start.x}
-                y1={points.start.y}
-                x2={points.end.x}
-                y2={points.end.y}
-                stroke="#38bdf8"
-                strokeWidth="2.2"
-                markerEnd="url(#arrowhead)"
-              />
+              <polyline points={polylinePoints} stroke="#38bdf8" strokeWidth="2.4" fill="none" />
               <text x={labelX} y={labelY} className="rpa-edge__label">
                 {edge.label}
               </text>
