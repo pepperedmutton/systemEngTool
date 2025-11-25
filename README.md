@@ -24,13 +24,18 @@ frontend/       Vite + React (TypeScript) 客户端
 notes/          仍保留 NASA Handbook 学习笔记，供参考
 ```
 
-## 更新（系统级方块图支持）
+## 更新（系统级方块图制作方法）
 
-- **组件位置**：`frontend/src/RpaSystemDiagram.tsx`，纯 SVG 方块图，无额外依赖。当前节点/连线示例基于默认数据集（RPA 探针），如需适配其他项目，可直接修改组件内的节点和接口文案。
-- **集成方式**：`frontend/src/App.tsx` 中新增 `determineCurrentPhase(project, skipEarlyStages)`，结合 `lifecycleState`/`missionPhase` 推导当前阶段（pdr/cdr/sir/orr）。每个 `StageSection` 尾部按 `currentPhase` 条件渲染 `<RpaSystemDiagram />`，确保方块图始终位于当前阶段内容的底部。
-- **信息来源**：示例节点与连线取自 `backend/data/projects.json` 的现有项目字段（偏压/供电、探头、跨阻/采集、上位机、控制/位移等链路）。更换项目时只需更新 JSON 数据和/或 `RpaSystemDiagram.tsx` 内的布局/文案。
-- **样式**：新增样式位于 `frontend/src/App.css`（`.rpa-diagram*`），沿用深色玻璃态风格，可按需扩展。
-- **查看方法**：`cd frontend && npm run dev`，浏览器打开默认端口（如 `http://localhost:5173`），选择任意项目，滚动到当前阶段（由生命周期状态自动判定）即可看到方块图示例。
+- **组件文件**：`frontend/src/RpaSystemDiagram.tsx` 纯 SVG 实现，无第三方依赖。节点/连线文案取自 `backend/data/projects.json` 的 RPA 项目（外置高压扫描电源、机箱接口/控制面板、跨阻/电流计、屏蔽栅偏压源、穿舱法兰、RPA 探头、上位机、位移台等）。
+- **布局方式（显式坐标）**：每个节点在 `nodes` 数组中指定固定 `x/y/width/height`，无自动排版。连线使用 `edges` 数组定义，提供 `from/to` 以及 `midX/midY` 以生成折线拐点，避免线段穿过方块。必要时为端点指定 `fromAnchor/toAnchor`（top/right/bottom/left）以控制出线方向。
+- **特殊处理**：
+  - 机箱内设备（跨阻/电流计、屏蔽栅偏压源）包裹在虚线框内，保持与外部线路分离。
+  - 24 V 开关电源已移除，机箱默认接市电；仅保留外置高压扫描电源 + 机箱内偏压源。
+  - 上位机固定在左下，所有与上位机的折线使用显式 `midX/midY` 避开节点；穿舱/探头链路保持在右侧。
+  - 若出现遮挡，直接调整 `nodes` 坐标或对应 `edges` 的 `midX/midY`，不会有自动重排。
+- **集成点**：`frontend/src/App.tsx` 中的 `determineCurrentPhase(project, skipEarlyStages)` 推导当前阶段（pdr/cdr/sir/orr），在每个 `StageSection` 尾部按 `currentPhase` 条件渲染 `<RpaSystemDiagram />`，保证方块图仅显示在当前阶段底部。
+- **样式**：`frontend/src/App.css` 的 `.rpa-diagram*` 控制背景、节点描边、折线粗细与箭头移除；标签设置 `pointer-events: none` 防止遮挡。可按需调整颜色/阴影。
+- **查看方式**：`cd frontend && npm run dev`，浏览器打开（默认 `http://localhost:5173`），选择任意项目并滚动到当前阶段即可查看最新方块图。修改坐标后无需额外脚本，保存即生效。
 
 ## 后端运行
 
