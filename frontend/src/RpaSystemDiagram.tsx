@@ -80,18 +80,10 @@ const nodes: DiagramNode[] = [
     height: 70,
   },
   {
-    id: 'daq',
-    label: ['信号采集与处理模块', '（数采卡）'],
-    x: 610,
-    y: 250,
-    width: 210,
-    height: 80,
-  },
-  {
     id: 'host',
     label: ['上位机与自动化', '测量软件'],
     x: 890,
-    y: 250,
+    y: 260,
     width: 210,
     height: 80,
   },
@@ -159,23 +151,26 @@ const edges: DiagramEdge[] = [
     labelOffsetY: 12,
   },
   {
-    id: 'tia-to-daq',
-    from: 'tia',
-    to: 'daq',
-    label: '模拟输出',
-  },
-  {
-    id: 'daq-to-host',
-    from: 'daq',
-    to: 'host',
-    label: 'USB 数据采集',
-  },
-  {
     id: 'control-to-host',
     from: 'control',
     to: 'host',
     label: 'USB 控制/遥测',
     labelOffsetY: -14,
+  },
+  {
+    id: 'tia-to-host',
+    from: 'tia',
+    to: 'host',
+    label: '电流表测量回读',
+  },
+  {
+    id: 'hv-to-host',
+    from: 'hv-scan',
+    to: 'host',
+    label: '高压源程控/回读',
+    fromAnchor: 'right',
+    toAnchor: 'top',
+    labelOffsetY: -10,
   },
 ]
 
