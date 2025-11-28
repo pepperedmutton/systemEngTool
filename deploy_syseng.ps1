@@ -3,9 +3,12 @@
 # 支持 sshpass（填入 $SshPass 时自动使用），否则走密钥或手输密码。
 
 param(
-  [string]$ServerHost = "123.56.97.173",
+  # 默认使用 SSH 配置中的别名“syseng”，可按需覆盖
+  [string]$ServerHost = "syseng",
   [string]$ServerUser = "root",
   [int]$ServerPort = 22,
+  # 前端调用后端的真实可解析地址（不要用 SSH 别名）
+  [string]$ApiHost    = "123.56.97.173",
   [string]$RemoteDir  = "/www/wwwroot/SysEng",
   [string]$Pm2Name    = "SysEng",
   [string]$ApiPort    = "3002",
@@ -27,7 +30,7 @@ Write-Host "[local] Remote dir: $RemoteDir"
 # === 1) 前端构建（产出 frontend/dist） ===
 Write-Host "[local] npm install & build (frontend)"
 Push-Location (Join-Path $RepoRoot "frontend")
-$env:VITE_API_BASE_URL = "http://$ServerHost`:$ApiPort"
+$env:VITE_API_BASE_URL = "http://$ApiHost`:$ApiPort"
 npm install
 npm run build
 Pop-Location
