@@ -11,15 +11,15 @@
 - 组件位置：`src/components/MermaidChart.tsx`  
   - 使用 `mermaid.render`（异步 v10 API）、`startOnLoad: false`、`theme: 'dark'`。  
   - 每次渲染前会清空容器 `innerHTML`，避免重复叠加。
-- 页面使用：`src/App.tsx` 顶部区域的系统图面板。
+- 页面使用：项目专属页面顶部的系统图面板（如 `src/pages/rpa-probe.tsx`）。
   ```tsx
-  import MermaidChart from './components/MermaidChart'
+  import MermaidChart from '../components/MermaidChart'
 
-  const rpaDiagram = `...Mermaid graph LR...`
+  const rpaProbeDiagram = `...Mermaid graph LR...`
 
-  <MermaidChart chartCode={rpaDiagram} />
+  <MermaidChart chartCode={rpaProbeDiagram} />
   ```
-- 当前系统图代码：`src/App.tsx` 内的 `rpaDiagram` 字符串。核心要点：
+- 当前 RPA 探针系统图代码：`src/pages/rpa-probe.tsx` 内的 `rpaProbeDiagram` 字符串。核心要点：
   - 图类型：`graph LR`
   - 分层：Host、Power、RPABox、Vacuum、Motion；高压扫描电源是外部实验仪器（独立于供电层）
   - RPA 电控箱拆分前端接口（对接 RPA/穿舱/内部仪器）与后端接口（对接上位机 USB 与市电 AC）；新增“外部仪器控制接口”由后端内部配线引出，统一控制二维位移机构与外置高压扫描电源；内部元件（屏蔽栅偏压源、跨阻计）通过接口与外界沟通
@@ -40,6 +40,8 @@
    - 需要正交线条时，可在 `%%{init: { "flowchart": { "curve": "stepAfter" }}}%%` 内设置 `curve` 或通过 `linkStyle` 控制线宽/颜色。
 
 ## 目录速览
-- `src/App.tsx`：主界面，包含系统图面板和业务模块（需求、接口、BOM 等）。
+- `src/App.tsx`：主入口，仅负责项目选择、数据轮询和路由到具体页面。
+- `src/pages/`：每个项目的独立页面文件（`rpa-probe.tsx`、`rpa-power.tsx`、`generic.tsx`），`index.tsx` 中的 `projectPages` 映射注册页面，互不复用资源。
 - `src/App.css`：页面样式，包含系统图面板的样式定义。
 - `src/components/MermaidChart.tsx`：通用 Mermaid 渲染组件。
+- `src/components/ProjectSelection.tsx`：项目选择页。

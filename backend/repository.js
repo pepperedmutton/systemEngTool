@@ -24,10 +24,46 @@ class ProjectRepository {
 
   async ensureStorage() {
     await fs.mkdir(this.storageDir, { recursive: true });
+    await this.migrateLegacyAggregatedFile();
+  }
+
+  async migrateLegacyAggregatedFile() {
+    const aggregatePath = path.join(this.storageDir, "projects.json");
+    const backupPath = path.join(this.storageDir, "projects.legacy.json");
+
+    if (await this.exists(backupPath)) {
+      return;
+    }
+
+    const legacyProjects = await this.readJson(aggregatePath);
+    if (!Array.isArray(legacyProjects) || legacyProjects.length === 0) {
+      return;
+    }
+
+    for (const legacy of legacyProjects) {
+      if (!legacy?.id) continue;
+      const normalized = this.normalizeProject(legacy);
+      const targetFile = projectPath(this.storageDir, normalized.id);
+      if (await this.exists(targetFile)) {
+        continue;
+      }
+      await this.writeProjectFile(normalized.id, normalized);
+      await this.appendLog(normalized.id, `MIGRATE from aggregated file (${path.basename(aggregatePath)})`);
+    }
+
+    try {
+      await safeMove(aggregatePath, backupPath);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Failed to move legacy aggregated file", error);
+    }
   }
 
   async withLock(action) {
-    const run = this.lock.then(() => action());
+    const run = this.lock.then(async () => {
+      await this.ready;
+      return action();
+    });
     this.lock = run.catch(() => {});
     return run;
   }
@@ -39,9 +75,7 @@ class ProjectRepository {
   async getProject(projectId) {
     const project = await this.readProjectFile(projectId);
     if (project) return this.normalizeProject(project);
-    // fallback: search legacy aggregated file if any
-    const all = await this.readProjects();
-    return all.find((item) => item.id === projectId) || null;
+    return null;
   }
 
   async createProject(payload) {
@@ -221,7 +255,11 @@ class ProjectRepository {
     await this.ready;
     try {
       const files = await fs.readdir(this.storageDir);
-      const jsonFiles = files.filter((file) => file.toLowerCase().endsWith(".json"));
+      const jsonFiles = files.filter((file) => {
+        const lower = file.toLowerCase();
+        if (!lower.endsWith(".json")) return false;
+        return lower !== "projects.json" && lower !== "projects.legacy.json";
+      });
       const projects = [];
       for (const file of jsonFiles) {
         const content = await this.readJson(path.join(this.storageDir, file));
@@ -254,7 +292,8 @@ class ProjectRepository {
   async readJson(filePath) {
     try {
       const raw = await fs.readFile(filePath, "utf8");
-      const parsed = JSON.parse(raw);
+      const sanitized = raw.replace(/^\uFEFF/, "");
+      const parsed = JSON.parse(sanitized);
       return parsed;
     } catch (error) {
       if (error.code === "ENOENT") return null;
@@ -366,3 +405,16 @@ module.exports = {
   NotFoundError,
   ProjectRepository,
 };
+
+async function safeMove(source, target) {
+  try {
+    await fs.rename(source, target);
+  } catch (error) {
+    if (error.code === "EXDEV") {
+      await fs.copyFile(source, target);
+      await fs.rm(source, { force: true });
+    } else {
+      throw error;
+    }
+  }
+}

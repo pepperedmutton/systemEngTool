@@ -10,6 +10,7 @@
 - **中英混合数据支持**：后端 API 仍使用 REST/JSON，前端界面完整中文化，方便面向国内客户的沟通。
 - **AI 驱动**：本工具被设计为由上层 AI/自动化系统写入、维护数据，人工用户仅进行浏览与复核。为保证轨迹一致性，前端未提供手动新增/删除项目的入口，API 仅建议由可信的 AI 代理或集成脚本调用。
 - **实时同步**：前端每 5 秒轮询一次 `/projects`，任何 JSON 或脚本的改动都会即时同步；再配合 Vite dev server 热重载，开发体验接近“所见即所得”。
+- **项目隔离**：每个工程项目有独立的数据文件、变更日志与前端页面（含专属系统图/布局），互不共享 UI 状态或资源，避免串改。
 
 > **设计理念**  
 > - 项目信息（分解、需求、BOM）由 AI 生成并同步，避免人工手改导致失真。  
@@ -30,6 +31,7 @@ notes/          仍保留 NASA Handbook 学习笔记，供参考
 - 每个项目有独立 TXT 变更记录：`backend/data/<projectId>.log`，每次通过 API 增删改项目/需求都会追加一行时间戳和动作（如 `UPDATE project rpa-probe fields: summary, tags`）。
 - 下载变更记录：前端项目详情页提供“下载项目变更记录 (txt)”按钮，或直接调用 API：`GET /projects/:projectId/log`（`Content-Disposition: attachment`）。
 - 删除项目时，JSON 与 log 会同时被移除。
+- 兼容历史：如仍有旧的聚合文件 `backend/data/projects.json`，服务启动时会自动拆分成独立的 `<id>.json` 并将原文件转存为 `projects.legacy.json`，避免多个项目共用同一存储造成互相覆盖。
 
 ## Mermaid 系统图编写与校对指南（给 AI 的操作指引，>=1000 字）
 
@@ -37,7 +39,7 @@ notes/          仍保留 NASA Handbook 学习笔记，供参考
 
 ### 1. 文件与组件入口
 - 渲染组件：`frontend/src/components/MermaidChart.tsx`，内部用 `mermaid.render`，配置 `startOnLoad:false`、`theme:'dark'`。渲染前会清空容器，防止重复叠加。
-- 系统图代码：`frontend/src/App.tsx` 中的 `const rpaDiagram = \`...\``。这是唯一的图定义来源，修改后即刻生效。
+- 系统图代码：`frontend/src/pages/rpa-probe.tsx` 中的 `const rpaProbeDiagram = \`...\``（如需新增项目图，请在对应页面文件中添加独立字符串并注册）。修改后即刻生效。
 - 样式：`frontend/src/App.css` 的 `.mermaid-chart` 块。当前设置无滚动条，宽度自适应，字体由 Mermaid init 的 `themeVariables.fontSize` 控制。
 
 ### 2. 初始化模板（必须保留）
