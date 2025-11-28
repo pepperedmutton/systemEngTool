@@ -16,19 +16,14 @@ class NotFoundError extends Error {
 }
 
 class ProjectRepository {
-  constructor(storagePath) {
-    this.storagePath = storagePath;
+  constructor(storageDir) {
+    this.storageDir = storageDir;
     this.lock = Promise.resolve();
     this.ready = this.ensureStorage();
   }
 
   async ensureStorage() {
-    await fs.mkdir(path.dirname(this.storagePath), { recursive: true });
-    try {
-      await fs.access(this.storagePath);
-    } catch {
-      await fs.writeFile(this.storagePath, "[]", "utf8");
-    }
+    await fs.mkdir(this.storageDir, { recursive: true });
   }
 
   async withLock(action) {
@@ -42,14 +37,17 @@ class ProjectRepository {
   }
 
   async getProject(projectId) {
-    const projects = await this.readProjects();
-    return projects.find((project) => project.id === projectId) || null;
+    const project = await this.readProjectFile(projectId);
+    if (project) return this.normalizeProject(project);
+    // fallback: search legacy aggregated file if any
+    const all = await this.readProjects();
+    return all.find((item) => item.id === projectId) || null;
   }
 
   async createProject(payload) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      if (projects.some((project) => project.id === payload.id)) {
+      const projectFile = projectPath(this.storageDir, payload.id);
+      if (await this.exists(projectFile)) {
         throw new ConflictError(`Project ${payload.id} already exists`);
       }
 
@@ -78,19 +76,16 @@ class ProjectRepository {
         lastUpdated: now,
       };
 
-      projects.push(project);
-      await this.writeProjects(projects);
+      await this.writeProjectFile(project.id, project);
+      await this.appendLog(project.id, `CREATE project ${project.id}`);
       return project;
     });
   }
 
   async replaceProject(projectId, payload) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      const index = projects.findIndex((project) => project.id === projectId);
-      if (index === -1) {
-        throw new NotFoundError(`Project ${projectId} not found`);
-      }
+      const existing = await this.readProjectFile(projectId);
+      if (!existing) throw new NotFoundError(`Project ${projectId} not found`);
 
       const now = new Date().toISOString();
       const preparedRequirements = [];
@@ -117,51 +112,46 @@ class ProjectRepository {
         lastUpdated: now,
       };
 
-      projects[index] = updated;
-      await this.writeProjects(projects);
+      await this.writeProjectFile(projectId, updated);
+      await this.appendLog(projectId, `REPLACE project ${projectId}`);
       return updated;
     });
   }
 
   async updateProject(projectId, updates) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      const index = projects.findIndex((project) => project.id === projectId);
-      if (index === -1) {
-        throw new NotFoundError(`Project ${projectId} not found`);
-      }
+      const project = await this.readProjectFile(projectId);
+      if (!project) throw new NotFoundError(`Project ${projectId} not found`);
 
-      const project = projects[index];
       const updated = {
         ...project,
         ...updates,
         lastUpdated: new Date().toISOString(),
       };
-      projects[index] = updated;
-      await this.writeProjects(projects);
+
+      await this.writeProjectFile(projectId, updated);
+      const updatedKeys = Object.keys(updates || {}).join(", ") || "no fields";
+      await this.appendLog(projectId, `UPDATE project ${projectId} fields: ${updatedKeys}`);
       return updated;
     });
   }
 
   async deleteProject(projectId) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      const filtered = projects.filter((project) => project.id !== projectId);
-      if (filtered.length === projects.length) {
-        throw new NotFoundError(`Project ${projectId} not found`);
-      }
-      await this.writeProjects(filtered);
+      const jsonPath = projectPath(this.storageDir, projectId);
+      const logPath = logPathFor(this.storageDir, projectId);
+      if (!(await this.exists(jsonPath))) throw new NotFoundError(`Project ${projectId} not found`);
+
+      await fs.rm(jsonPath, { force: true });
+      await fs.rm(logPath, { force: true });
     });
   }
 
   async addRequirement(projectId, payload) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      const index = projects.findIndex((project) => project.id === projectId);
-      if (index === -1) {
-        throw new NotFoundError(`Project ${projectId} not found`);
-      }
-      const project = projects[index];
+      const project = await this.readProjectFile(projectId);
+      if (!project) throw new NotFoundError(`Project ${projectId} not found`);
+
       const requirement = this.toRequirement(
         projectId,
         payload,
@@ -173,21 +163,17 @@ class ProjectRepository {
         requirements: [...(project.requirements || []), requirement],
         lastUpdated: new Date().toISOString(),
       };
-      projects[index] = updated;
-      await this.writeProjects(projects);
+
+      await this.writeProjectFile(projectId, updated);
+      await this.appendLog(projectId, `ADD requirement ${requirement.id}`);
       return requirement;
     });
   }
 
   async updateRequirement(projectId, requirementId, updates) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      const projectIndex = projects.findIndex((project) => project.id === projectId);
-      if (projectIndex === -1) {
-        throw new NotFoundError(`Project ${projectId} not found`);
-      }
-
-      const project = projects[projectIndex];
+      const project = await this.readProjectFile(projectId);
+      if (!project) throw new NotFoundError(`Project ${projectId} not found`);
       const requirementIndex = (project.requirements || []).findIndex(
         (req) => req.id === requirementId,
       );
@@ -199,59 +185,111 @@ class ProjectRepository {
       const updatedRequirement = { ...requirement, ...updates };
       const requirements = [...project.requirements];
       requirements[requirementIndex] = updatedRequirement;
-      projects[projectIndex] = {
+      const updatedProject = {
         ...project,
         requirements,
         lastUpdated: new Date().toISOString(),
       };
-      await this.writeProjects(projects);
+
+      await this.writeProjectFile(projectId, updatedProject);
+      const updatedKeys = Object.keys(updates || {}).join(", ") || "no fields";
+      await this.appendLog(projectId, `UPDATE requirement ${requirementId}: ${updatedKeys}`);
       return updatedRequirement;
     });
   }
 
   async deleteRequirement(projectId, requirementId) {
     return this.withLock(async () => {
-      const projects = await this.readProjects();
-      const projectIndex = projects.findIndex((project) => project.id === projectId);
-      if (projectIndex === -1) {
-        throw new NotFoundError(`Project ${projectId} not found`);
-      }
-
-      const project = projects[projectIndex];
+      const project = await this.readProjectFile(projectId);
+      if (!project) throw new NotFoundError(`Project ${projectId} not found`);
       const filtered = (project.requirements || []).filter((req) => req.id !== requirementId);
       if (filtered.length === (project.requirements || []).length) {
         throw new NotFoundError(`Requirement ${projectId}:${requirementId} not found`);
       }
 
-      projects[projectIndex] = {
+      const updatedProject = {
         ...project,
         requirements: filtered,
         lastUpdated: new Date().toISOString(),
       };
-      await this.writeProjects(projects);
+      await this.writeProjectFile(projectId, updatedProject);
+      await this.appendLog(projectId, `DELETE requirement ${requirementId}`);
     });
   }
 
   async readProjects() {
     await this.ready;
     try {
-      const raw = await fs.readFile(this.storagePath, "utf8");
-      if (!raw.trim()) {
-        return [];
+      const files = await fs.readdir(this.storageDir);
+      const jsonFiles = files.filter((file) => file.toLowerCase().endsWith(".json"));
+      const projects = [];
+      for (const file of jsonFiles) {
+        const content = await this.readJson(path.join(this.storageDir, file));
+        if (!content) continue;
+        if (Array.isArray(content)) {
+          for (const item of content) {
+            if (item?.id) projects.push(this.normalizeProject(item));
+          }
+        } else if (content?.id) {
+          projects.push(this.normalizeProject(content));
+        }
       }
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return projects;
     } catch (error) {
-      if (error.code === "ENOENT") {
-        return [];
-      }
+      if (error.code === "ENOENT") return [];
       throw error;
     }
   }
 
-  async writeProjects(projects) {
-    const payload = JSON.stringify(projects, null, 2);
-    await fs.writeFile(this.storagePath, payload, "utf8");
+  async readProjectFile(projectId) {
+    await this.ready;
+    const raw = await this.readJson(projectPath(this.storageDir, projectId));
+    if (!raw) return null;
+    if (Array.isArray(raw)) {
+      return raw.find((item) => item?.id === projectId) || null;
+    }
+    return this.normalizeProject(raw);
+  }
+
+  async readJson(filePath) {
+    try {
+      const raw = await fs.readFile(filePath, "utf8");
+      const parsed = JSON.parse(raw);
+      return parsed;
+    } catch (error) {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    }
+  }
+
+  async writeProjectFile(projectId, project) {
+    const payload = JSON.stringify(this.normalizeProject(project), null, 2);
+    await fs.writeFile(projectPath(this.storageDir, projectId), payload, "utf8");
+  }
+
+  async appendLog(projectId, message) {
+    const logPath = logPathFor(this.storageDir, projectId);
+    const line = `[${new Date().toISOString()}] ${message}\n`;
+    await fs.appendFile(logPath, line, "utf8");
+  }
+
+  async readLog(projectId) {
+    const logPath = logPathFor(this.storageDir, projectId);
+    try {
+      return await fs.readFile(logPath, "utf8");
+    } catch (error) {
+      if (error.code === "ENOENT") return "";
+      throw error;
+    }
+  }
+
+  async exists(targetPath) {
+    try {
+      await fs.access(targetPath);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   toRequirement(projectId, payload, indexHint, existingRequirements = []) {
@@ -289,6 +327,38 @@ class ProjectRepository {
     const parsed = Number.parseInt(suffix, 10);
     return Number.isNaN(parsed) ? 0 : parsed;
   }
+
+  normalizeProject(project) {
+    if (!project) return project;
+    return {
+      id: project.id,
+      name: project.name,
+      missionPhase: project.missionPhase,
+      lifecycleState: project.lifecycleState,
+      sponsor: project.sponsor,
+      summary: project.summary,
+      tags: Array.isArray(project.tags) ? project.tags : [],
+      functionalDecomposition: Array.isArray(project.functionalDecomposition)
+        ? project.functionalDecomposition
+        : [],
+      physicalDecomposition: Array.isArray(project.physicalDecomposition)
+        ? project.physicalDecomposition
+        : [],
+      requirements: Array.isArray(project.requirements) ? project.requirements : [],
+      bom: Array.isArray(project.bom) ? project.bom : [],
+      subsystems: Array.isArray(project.subsystems) ? project.subsystems : [],
+      interfaces: Array.isArray(project.interfaces) ? project.interfaces : [],
+      lastUpdated: project.lastUpdated,
+    };
+  }
+}
+
+function projectPath(storageDir, projectId) {
+  return path.join(storageDir, `${projectId}.json`);
+}
+
+function logPathFor(storageDir, projectId) {
+  return path.join(storageDir, `${projectId}.log`);
 }
 
 module.exports = {

@@ -7,7 +7,7 @@ const { ConflictError, NotFoundError, ProjectRepository } = require("./repositor
 
 const DEFAULT_PORT = 8001;
 const DEFAULT_HOST = "127.0.0.1";
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, "data", "projects.json");
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 
 class ValidationError extends Error {
   constructor(message) {
@@ -35,7 +35,7 @@ const cliArgs = parseArgs(process.argv.slice(2));
 const host = cliArgs.host || process.env.HOST || process.env.BIND_HOST || DEFAULT_HOST;
 const port = cliArgs.port || Number(process.env.PORT || process.env.API_PORT || DEFAULT_PORT);
 
-const repo = new ProjectRepository(DATA_FILE);
+const repo = new ProjectRepository(DATA_DIR);
 const app = express();
 
 const allowedOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/i;
@@ -152,6 +152,22 @@ app.delete("/projects/:projectId/requirements/:requirementId", async (req, res, 
   try {
     await repo.deleteRequirement(req.params.projectId, req.params.requirementId);
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/projects/:projectId/log", async (req, res, next) => {
+  try {
+    const project = await repo.getProject(req.params.projectId);
+    if (!project) throw new NotFoundError("Project not found");
+    const content = await repo.readLog(req.params.projectId);
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${req.params.projectId}-changelog.txt"`,
+    );
+    res.send(content);
   } catch (error) {
     next(error);
   }

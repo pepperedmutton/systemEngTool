@@ -24,6 +24,13 @@ frontend/       Vite + React (TypeScript) 客户端
 notes/          仍保留 NASA Handbook 学习笔记，供参考
 ```
 
+## 数据存储与变更记录（每项目独立文件）
+- 后端数据目录：`backend/data/`（已加入 `.gitignore`，不会提交仓库）。
+- 每个项目对应一个 JSON：`backend/data/<projectId>.json`，结构与 API 返回体一致。
+- 每个项目有独立 TXT 变更记录：`backend/data/<projectId>.log`，每次通过 API 增删改项目/需求都会追加一行时间戳和动作（如 `UPDATE project rpa-probe fields: summary, tags`）。
+- 下载变更记录：前端项目详情页提供“下载项目变更记录 (txt)”按钮，或直接调用 API：`GET /projects/:projectId/log`（`Content-Disposition: attachment`）。
+- 删除项目时，JSON 与 log 会同时被移除。
+
 ## Mermaid 系统图编写与校对指南（给 AI 的操作指引，>=1000 字）
 
 本工程的系统图使用 Mermaid v10（已安装为依赖 `mermaid`），通过通用组件渲染。以下规则面向 AI/自动化代理，帮助在不引入歧义的前提下稳定生成可审计的图形代码。所有生成动作请遵守本节约束，避免随意改动颜色、布局或链路语义。

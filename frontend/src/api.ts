@@ -1,9 +1,8 @@
 import type { Project, Requirement, RequirementPayload } from './types'
 
-const configuredBase = import.meta.env.VITE_API_BASE_URL
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')
   : ''
-const API_BASE_URL = configuredBase
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`

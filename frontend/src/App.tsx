@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import './App.css'
-import { createRequirement, fetchProjects } from './api'
+import { API_BASE_URL, createRequirement, fetchProjects } from './api'
 import MermaidChart from './components/MermaidChart'
 import type {
   BillOfMaterialItem,
@@ -777,6 +777,7 @@ function ProjectDetail({
                 总览上位机、供电层、RPA 电控箱、真空接口与探头、运动控制之间的接口与信号路径。
               </p>
               <p className="mermaid-panel__meta">当前阶段：{currentPhase.toUpperCase()}</p>
+              <DownloadLogButton projectId={project.id} />
             </div>
             <MermaidChart chartCode={rpaDiagram} />
           </section>
@@ -894,6 +895,16 @@ function ProjectDetail({
 }
 
 export default App
+
+function DownloadLogButton({ projectId }: { projectId: string }) {
+  const base = API_BASE_URL || ''
+  const url = `${base}/projects/${projectId}/log`
+  return (
+    <a className="download-log" href={url} download>
+      下载项目变更记录 (txt)
+    </a>
+  )
+}
 
 function ProjectSideNav({
   projects,
