@@ -492,7 +492,7 @@ button[type='submit']:disabled {
   color: #bef264;
 }
 
-.rpa-diagram {
+.mermaid-panel {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px solid rgba(148, 163, 184, 0.25);
@@ -502,60 +502,36 @@ button[type='submit']:disabled {
     rgba(15, 23, 42, 0.82);
 }
 
-.rpa-diagram__header h3 {
+.mermaid-panel__header h3 {
   margin: 0 0 0.35rem;
 }
 
-.rpa-diagram__lede {
+.mermaid-panel__lede {
   margin: 0 0 0.5rem;
   color: #cbd5f5;
 }
 
-.rpa-diagram__svg {
+.mermaid-panel__meta {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.mermaid-chart {
+  width: 100%;
+  overflow: hidden;
+  padding-top: 0.5rem;
+}
+
+.mermaid-chart svg {
   width: 100%;
   height: auto;
+  display: block;
 }
 
-.rpa-node rect {
-  fill: rgba(30, 41, 59, 0.92);
-  stroke: rgba(148, 163, 184, 0.55);
-  stroke-width: 1.4px;
-}
-
-.rpa-node__label {
-  fill: #e2e8f0;
-  font-size: 13px;
-  text-anchor: middle;
-  dominant-baseline: middle;
-  pointer-events: none;
-}
-
-.rpa-edge line {
-  stroke: #38bdf8;
-}
-
-.rpa-edge__label {
-  fill: #cbd5f5;
-  font-size: 12px;
-  text-anchor: middle;
-  pointer-events: none;
-}
-
-.rpa-edge polyline {
-  opacity: 0.9;
-}
-
-.rpa-chassis rect {
-  fill: rgba(59, 130, 246, 0.06);
-  stroke: rgba(148, 163, 184, 0.6);
-  stroke-dasharray: 8 6;
-  stroke-width: 1.2px;
-}
-
-.rpa-chassis text {
-  fill: #94a3b8;
-  font-size: 12px;
-  text-anchor: middle;
+.mermaid-error {
+  color: #fecdd3;
+  margin: 0.5rem 0;
 }
 
 @media (max-width: 1100px) {

@@ -9,6 +9,7 @@ import {
 } from 'react'
 import './App.css'
 import { createRequirement, fetchProjects } from './api'
+import MermaidChart from './components/MermaidChart'
 import type {
   BillOfMaterialItem,
   DocumentSection,
@@ -16,7 +17,6 @@ import type {
   Requirement,
   RequirementPayload,
 } from './types'
-import RpaSystemDiagram from './RpaSystemDiagram'
 
 const verificationOptions = ['Analysis', 'Inspection', 'Test', 'Demonstration']
 const priorityOptions = ['High', 'Medium', 'Low']
@@ -57,6 +57,85 @@ const requirementDefaults: RequirementPayload = {
   priority: priorityOptions[1],
   scope: 'system',
 }
+
+const rpaDiagram = `%%{init: { "flowchart": { "useMaxWidth": false, "nodeSpacing": 50, "rankSpacing": 80, "curve": "basis", "htmlLabels": true }, "themeVariables": { "fontSize": "18px" } } }%%
+graph LR
+    %% 定义样式类
+    classDef usb stroke:#0075ff,stroke-width:2px,color:white,fill:#003f88;
+    classDef hv stroke:#ff4d4d,stroke-width:2px,color:white,fill:#880000;
+    classDef signal stroke:#00cc66,stroke-width:2px,color:white,fill:#004422;
+    classDef box stroke:#666,stroke-width:2px,stroke-dasharray: 5 5,fill:none,color:#ccc;
+    classDef iface stroke:#94a3b8,stroke-width:2px,color:#e2e8f0,fill:#0b1221;
+    classDef mains stroke:#f59e0b,stroke-width:2px,color:#7c2d12,fill:#fef3c7;
+
+    %% ---------------- 节点定义 ----------------
+
+    subgraph Host ["上位机层 (Host Layer)"]
+        PC["上位机与自动化<br/>测量软件"]:::usb
+    end
+
+    subgraph Power ["供电层 (Power Layer)"]
+        Mains["市电输入"]:::mains
+    end
+
+    subgraph Instruments ["实验仪器 (Instruments)"]
+        ExtPS["外置高压扫描电源<br/>(实验仪器)"]:::hv
+    end
+
+    subgraph RPABox ["RPA 电控机箱 (RPA Control Box)"]
+        direction TB
+        BackIface["后端接口<br/>(USB / 市电)"]:::iface
+        FrontIface["前端接口<br/>(RPA / 内部仪器)"]:::iface
+        ExtCtrlIface["外部仪器控制接口"]:::iface
+        BiasSource["屏蔽栅偏压源<br/>(机箱内)"]:::hv
+        Ammeter["跨阻 / 电流计<br/>(机箱内)"]:::signal
+    end
+
+    subgraph Vacuum ["真空接口与探头 (Vacuum & Probe)"]
+        Flange("穿舱法兰 & 舱内线束<br/>(Feedthrough)"):::box
+        Probe("RPA 探头<br/>(四栅极 + 收集极)"):::signal
+    end
+
+    subgraph Motion ["运动控制 (Positioning)"]
+        MotionCtrl["二维真空位移机构<br/>与控制台"]:::usb
+    end
+
+    %% ---------------- 连线逻辑 ----------------
+
+    %% 后端接口：与上位机/市电沟通 (蓝色 + 橙色)
+    PC == "USB 控制 / 测量回读（单线双向）" ==> BackIface
+    Mains -- "市电 AC" --> BackIface
+
+    %% 机箱内部：接口 -> 仪器与外设
+    BackIface -- "控制/供电" --> BiasSource
+    BackIface -- "控制/供电" --> Ammeter
+    BackIface -- "内部配线" --> FrontIface
+    BackIface -- "内部配线" --> ExtCtrlIface
+    ExtCtrlIface == "控制/联锁" ==> MotionCtrl
+    ExtCtrlIface == "控制/联锁" ==> ExtPS
+
+    %% 前端接口：与 RPA/穿舱连接
+    BiasSource -- "屏蔽栅偏压" --> FrontIface
+    FrontIface -- "屏蔽栅偏压" --> Flange
+    ExtPS -- "扫描偏压 V+/V-" --> Flange
+    Flange -- "多路偏压输入" --> Probe
+
+    %% 信号路径
+    Flange -- "收集极电流" --> FrontIface
+    FrontIface -- "信号路由" --> Ammeter
+    Ammeter -- "流量回读" --> BackIface
+
+    %% ---------------- 样式应用 ----------------
+    %% 强制布局微调 (隐式连接以调整层级)
+    ExtPS ~~~ RPABox
+    RPABox ~~~ MotionCtrl
+    
+    %% 连线颜色定义
+    linkStyle 0,2,3,4,5,6,7 stroke:#0075ff,stroke-width:2px;
+    linkStyle 1 stroke:#f59e0b,stroke-width:2px;
+    linkStyle 8,9,10,11 stroke:#ff4d4d,stroke-width:2px;
+    linkStyle 12,13,14 stroke:#00cc66,stroke-width:2px;
+`
 
 function determineCurrentPhase(project: Project, skipEarlyStages: boolean) {
   if (skipEarlyStages) return 'sir' as const
@@ -685,6 +764,17 @@ function ProjectDetail({
           <button className="back-button" onClick={onBack}>
             ← 返回项目列表
           </button>
+          <section className="mermaid-panel">
+            <div className="mermaid-panel__header">
+              <p className="eyebrow">系统图</p>
+              <h3>RPA 电控箱 · 真空探头 · 上位机</h3>
+              <p className="mermaid-panel__lede">
+                总览上位机、供电层、RPA 电控箱、真空接口与探头、运动控制之间的接口与信号路径。
+              </p>
+              <p className="mermaid-panel__meta">当前阶段：{currentPhase.toUpperCase()}</p>
+            </div>
+            <MermaidChart chartCode={rpaDiagram} />
+          </section>
           <header className="project-details__header">
             <div>
               <p className="eyebrow">设计概览</p>
@@ -733,7 +823,6 @@ function ProjectDetail({
                     description="将功能落实到探针前端、后电路、结构件等实体。"
                   />
                 </div>
-                {currentPhase === 'pdr' && <RpaSystemDiagram />}
               </>
             )}
           </StageSection>
@@ -760,7 +849,6 @@ function ProjectDetail({
                   isSaving={isSaving}
                 />
                 <InterfacePanel subsystems={project.subsystems} interfaces={project.interfaces} />
-                {currentPhase === 'cdr' && <RpaSystemDiagram />}
               </>
             )}
           </StageSection>
@@ -775,12 +863,10 @@ function ProjectDetail({
             {skipEarlyStages ? (
               <>
                 <InterfacePanel subsystems={project.subsystems} interfaces={project.interfaces} />
-                {currentPhase === 'sir' && <RpaSystemDiagram />}
               </>
             ) : (
               <>
                 <IntegrationPanel subsystems={project.subsystems} />
-                {currentPhase === 'sir' && <RpaSystemDiagram />}
               </>
             )}
           </StageSection>
@@ -794,7 +880,6 @@ function ProjectDetail({
           >
             <>
               <BOMPanel bom={project.bom} />
-              {currentPhase === 'orr' && <RpaSystemDiagram />}
             </>
           </StageSection>
         </div>
