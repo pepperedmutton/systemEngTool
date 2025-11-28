@@ -82,19 +82,21 @@ graph LR
         ExtPS["外置高压扫描电源<br/>(实验仪器)"]:::hv
     end
 
-    subgraph RPABox ["RPA 电控机箱 (RPA Control Box)"]
-        direction TB
-        BackIface["后端接口<br/>(USB / 市电)"]:::iface
-        FrontIface["前端接口<br/>(RPA / 内部仪器)"]:::iface
-        ExtCtrlIface["外部仪器控制接口"]:::iface
-        BiasSource["屏蔽栅偏压源<br/>(机箱内)"]:::hv
-        Ammeter["跨阻 / 电流计<br/>(机箱内)"]:::signal
-    end
-
-    subgraph Vacuum ["真空接口与探头 (Vacuum & Probe)"]
-        Flange("穿舱法兰 & 舱内线束<br/>(Feedthrough)"):::box
-        Probe("RPA 探头<br/>(四栅极 + 收集极)"):::signal
-    end
+      subgraph RPABox ["RPA 电控机箱 (RPA Control Box)"]
+          direction TB
+          BackIface["后端接口<br/>(USB / 市电)"]:::iface
+          FrontIface["前端接口<br/>(RPA / 内部仪器)"]:::iface
+          ExtCtrlIface["外部仪器控制接口"]:::iface
+          GroundIface["接地接口"]:::iface
+          BiasSource["屏蔽栅偏压源<br/>(机箱内)"]:::hv
+          Ammeter["跨阻 / 电流计<br/>(机箱内)"]:::signal
+      end
+  
+      subgraph Vacuum ["真空接口与探头 (Vacuum & Probe)"]
+          Flange("穿舱法兰 & 舱内线束<br/>(Feedthrough)"):::box
+          Probe("RPA 探头<br/>(四栅极 + 收集极)"):::signal
+          VacuumChamber["真空舱体模块"]:::box
+      end
 
     subgraph Motion ["运动控制 (Positioning)"]
         MotionCtrl["二维真空位移机构<br/>与控制台"]:::usb
@@ -107,35 +109,38 @@ graph LR
     Mains -- "市电 AC" --> BackIface
 
     %% 机箱内部：接口 -> 仪器与外设
-    BackIface -- "控制/供电" --> BiasSource
-    BackIface -- "控制/供电" --> Ammeter
-    BackIface -- "内部配线" --> FrontIface
-    BackIface -- "内部配线" --> ExtCtrlIface
-    ExtCtrlIface == "控制/联锁" ==> MotionCtrl
-    ExtCtrlIface == "控制/联锁" ==> ExtPS
-
-    %% 前端接口：与 RPA/穿舱连接
-    BiasSource -- "屏蔽栅偏压" --> FrontIface
-    FrontIface -- "屏蔽栅偏压" --> Flange
-    ExtPS -- "扫描偏压 V+/V-" --> Flange
-    Flange -- "多路偏压输入" --> Probe
-
-    %% 信号路径
-    Flange -- "收集极电流" --> FrontIface
-    FrontIface -- "信号路由" --> Ammeter
-    Ammeter -- "流量回读" --> BackIface
+      BackIface -- "控制/供电" --> BiasSource
+      BackIface -- "控制/供电" --> Ammeter
+      BackIface -- "内部配线" --> FrontIface
+      BackIface -- "内部配线" --> ExtCtrlIface
+      ExtCtrlIface == "控制/联锁" ==> MotionCtrl
+      ExtCtrlIface == "控制/联锁" ==> ExtPS
+      BiasSource -- "屏蔽栅正极接地" --> GroundIface
+  
+      %% 前端接口：与 RPA/穿舱连接
+      BiasSource -- "屏蔽栅偏压" --> FrontIface
+      FrontIface -- "屏蔽栅偏压" --> Flange
+      ExtPS -- "扫描偏压 V+/V-" --> Flange
+      ExtPS -- "接地" --> VacuumChamber
+      Flange -- "多路偏压输入" --> Probe
+      GroundIface -- "接地" --> VacuumChamber
+  
+      %% 信号路径
+      Flange -- "收集极电流" --> FrontIface
+      FrontIface -- "信号路由" --> Ammeter
+      Ammeter -- "流量回读" --> BackIface
 
     %% ---------------- 样式应用 ----------------
-    %% 强制布局微调 (隐式连接以调整层级)
-    ExtPS ~~~ RPABox
-    RPABox ~~~ MotionCtrl
-    
-    %% 连线颜色定义
-    linkStyle 0,2,3,4,5,6,7 stroke:#0075ff,stroke-width:2px;
-    linkStyle 1 stroke:#f59e0b,stroke-width:2px;
-    linkStyle 8,9,10,11 stroke:#ff4d4d,stroke-width:2px;
-    linkStyle 12,13,14 stroke:#00cc66,stroke-width:2px;
-`
+      %% 强制布局微调 (隐式连接以调整层级)
+      ExtPS ~~~ RPABox
+      RPABox ~~~ MotionCtrl
+      
+      %% 连线颜色定义
+      linkStyle 0,2,3,4,5,6,7 stroke:#0075ff,stroke-width:2px;
+      linkStyle 1 stroke:#f59e0b,stroke-width:2px;
+      linkStyle 9,10,11,13 stroke:#ff4d4d,stroke-width:2px;
+      linkStyle 8,12,14,15,16,17 stroke:#00cc66,stroke-width:2px;
+  `
 
 function determineCurrentPhase(project: Project, skipEarlyStages: boolean) {
   if (skipEarlyStages) return 'sir' as const

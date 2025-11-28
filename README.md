@@ -46,16 +46,17 @@ graph LR
 ### 3. 固定分层与节点命名
 按下列分组声明，名称与职责不可随意改写，只允许调整描述文字或换行。
 - Host：`PC["上位机与自动化<br/>测量软件"]`，类 `usb`。
-- Power：`Mains["市电输入"]`，类 `mains`。
-- Instruments：`ExtPS["外置高压扫描电源<br/>(实验仪器)"]`，类 `hv`。
-- RPABox：包含
-  - `BackIface["后端接口<br/>(USB / 市电)"]`（类 `iface`）
-  - `FrontIface["前端接口<br/>(RPA / 内部仪器)"]`（类 `iface`）
-  - `ExtCtrlIface["外部仪器控制接口"]`（类 `iface`）
-  - `BiasSource["屏蔽栅偏压源<br/>(机箱内)"]`（类 `hv`）
-  - `Ammeter["跨阻 / 电流计<br/>(机箱内)"]`（类 `signal`）
-- Vacuum：`Flange("穿舱法兰 & 舱内线束<br/>(Feedthrough)")`（类 `box`），`Probe("RPA 探头<br/>(四栅极 + 收集极)")`（类 `signal`）。
-- Motion：`MotionCtrl["二维真空位移机构<br/>与控制台"]`（类 `usb`，实际为控制接口颜色）。
+  - Power：`Mains["市电输入"]`，类 `mains`。
+  - Instruments：`ExtPS["外置高压扫描电源<br/>(实验仪器)"]`，类 `hv`。
+  - RPABox：包含
+    - `BackIface["后端接口<br/>(USB / 市电)"]`（类 `iface`）
+    - `FrontIface["前端接口<br/>(RPA / 内部仪器)"]`（类 `iface`）
+    - `ExtCtrlIface["外部仪器控制接口"]`（类 `iface`）
+    - `GroundIface["接地接口"]`（类 `iface`）
+    - `BiasSource["屏蔽栅偏压源<br/>(机箱内)"]`（类 `hv`）
+    - `Ammeter["跨阻 / 电流计<br/>(机箱内)"]`（类 `signal`）
+  - Vacuum：`Flange("穿舱法兰 & 舱内线束<br/>(Feedthrough)")`（类 `box`），`Probe("RPA 探头<br/>(四栅极 + 收集极)")`（类 `signal`），`VacuumChamber["真空舱体模块"]`（类 `box`）。
+  - Motion：`MotionCtrl["二维真空位移机构<br/>与控制台"]`（类 `usb`，实际为控制接口颜色）。
 
 ### 4. classDef（颜色固定，不要自创）
 ```mermaid
@@ -72,7 +73,7 @@ classDef mains stroke:#f59e0b,stroke-width:2px,color:#7c2d12,fill:#fef3c7;
 - 后端接口：`PC == "USB 控制 / 测量回读（单线双向）" ==> BackIface`；`Mains -- "市电 AC" --> BackIface`。
 - 机箱内部：`BackIface -- "控制/供电" --> BiasSource`，`BackIface -- "控制/供电" --> Ammeter`，`BackIface -- "内部配线" --> FrontIface`，`BackIface -- "内部配线" --> ExtCtrlIface`。
 - 外部仪器控制接口：`ExtCtrlIface == "控制/联锁" ==> MotionCtrl`，`ExtCtrlIface == "控制/联锁" ==> ExtPS`。
-- 前端接口：`BiasSource -- "屏蔽栅偏压" --> FrontIface`，`FrontIface -- "屏蔽栅偏压" --> Flange`，`ExtPS -- "扫描偏压 V+/V-" --> Flange`，`Flange -- "多路偏压输入" --> Probe`。
+- 接地与前端接口：`BiasSource -- "屏蔽栅正极接地" --> GroundIface`；`BiasSource -- "屏蔽栅偏压" --> FrontIface`；`FrontIface -- "屏蔽栅偏压" --> Flange`；`ExtPS -- "扫描偏压 V+/V-" --> Flange`；`ExtPS -- "接地" --> VacuumChamber`；`Flange -- "多路偏压输入" --> Probe`；`GroundIface -- "接地" --> VacuumChamber`。
 - 信号路径：`Flange -- "收集极电流" --> FrontIface`，`FrontIface -- "信号路由" --> Ammeter`，`Ammeter -- "流量回读" --> BackIface`。
 - 运动链路已改为经电控箱转发，禁止上位机直连 MotionCtrl。
 
@@ -81,10 +82,10 @@ classDef mains stroke:#f59e0b,stroke-width:2px,color:#7c2d12,fill:#fef3c7;
 ```mermaid
 linkStyle 0,2,3,4,5,6,7 stroke:#0075ff,stroke-width:2px;  %% USB/控制类
 linkStyle 1 stroke:#f59e0b,stroke-width:2px;               %% AC 市电
-linkStyle 8,9,10,11 stroke:#ff4d4d,stroke-width:2px;       %% 高压/偏压
-linkStyle 12,13,14 stroke:#00cc66,stroke-width:2px;        %% 信号回读
+linkStyle 9,10,11,13 stroke:#ff4d4d,stroke-width:2px;      %% 高压/偏压
+linkStyle 8,12,14,15,16,17 stroke:#00cc66,stroke-width:2px;   %% 接地/信号回读
 ```
-若新增连线，需重算索引并更新 README 说明，保持颜色语义一致（蓝=控制/通信，橙=AC，红=高压偏压，绿=信号）。
+若新增连线，需重算索引并更新 README 说明，保持颜色语义一致（蓝=控制/通信，橙=AC，红=高压偏压，绿=信号/接地）。
 
 ### 7. 标签与文案规范
 - 标签尽量短，必要时用 `<br/>` 分行。
